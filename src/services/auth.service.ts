@@ -14,6 +14,10 @@ export class AuthService {
         this.userService = new UserService();
     }
 
+    async verifyUserId(id: string) {
+        return await this.userService.findOne({ id: id });
+    }
+
     async register(dto: RegisterUserDTO): Promise<RegisterResponseDTO> {
         const { username, email, password } = dto;
         const hashedPassword = CryptoJS.HmacSHA256(password, 'changeme').toString(); //TODO(Joana): Alterar a key para um sitio seguro
