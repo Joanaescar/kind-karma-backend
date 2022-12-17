@@ -14,20 +14,26 @@ const options: StrategyOptions = {
             return auth ? auth : null;
         } */
     jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-    secretOrKey: 'secret',
-    issuer: 'localhost',
-    audience: 'localhost'
+    secretOrKey: process.env.JWT_SECRET,
+    issuer: process.env.JWT_ISSUER,
+    audience: process.env.JWT_AUDIENCE
 }
 
-passport.use(new JwtStrategy(options, (payload: any, done: VerifiedCallback): void => {
+passport.use(new JwtStrategy(options, async (payload: any, done: VerifiedCallback): Promise<void> => {
     const userId = payload.sub;
-
-
+    const authService: AuthService = new AuthService();
+    const user = await authService.verifyUserId(userId);
+    if (user) {
+        return done(null, user);
+    } else {
+        return done(null, false);
+    }
 }));
 
 import { ExpressError } from './src/errors/expressError';
 import { UserController } from './src/controllers/user.controller';
 import { AuthController } from './src/controllers/auth.controller';
+import { AuthService } from './src/services/auth.service';
 
 connect('mongodb://localhost:27017/kind-karma')
     .then(() => console.log('Database connected'))
@@ -38,6 +44,7 @@ const app: Express = express();
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(cors());
+app.use(passport.initialize());
 
 app.use('/users', UserController);
 app.use('/auth', AuthController);
